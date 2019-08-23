@@ -5,6 +5,7 @@ type Config struct {
 	File    string
 	Source  string
 	Target  string
-	Verbose bool
 	Dry     bool
+	Move    bool
+	Verbose bool
 }

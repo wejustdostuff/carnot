@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/spf13/cobra"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -59,6 +61,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&conf.File, "config", "c", "", "config file (default is $HOME/.carnot.yaml)")
 
 	rootCmd.Flags().BoolVar(&conf.Dry, "dry", false, "Run in dry mode")
+	rootCmd.Flags().BoolVar(&conf.Move, "move", false, "Copy or move files")
 	rootCmd.Flags().BoolVarP(&conf.Verbose, "verbose", "v", false, "Set debug mode")
 }
 
@@ -89,6 +92,16 @@ func initConfig() {
 }
 
 func run(cmd *cobra.Command, args []string) {
+
+	logrus.SetFormatter(&logrus.TextFormatter{
+		DisableLevelTruncation: true,
+		DisableTimestamp:       true,
+	})
+
+	if conf.Verbose {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
 	if len(args) < 1 {
 		exit("Source directory is missing")
 	}
