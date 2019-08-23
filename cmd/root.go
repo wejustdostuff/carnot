@@ -29,23 +29,19 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+	"github.com/wejustdostuff/carnot/crawler"
 )
 
-var cfgFile string
+var conf crawler.Config
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "carnot",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Short: "File sorting tool to organize files into folders by year, month and day.",
+	Long: `This software will move all files from the input directory into the output
+    directory without changing the files content. It will only rename the
+    files and place them in the proper directory for year, month and day.`,
+	Run: run,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -60,22 +56,17 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	rootCmd.Flags().StringVarP(&conf.File, "config", "c", "", "config file (default is $HOME/.carnot.yaml)")
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.carnot.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().BoolVar(&conf.Dry, "dry", false, "Run in dry mode")
+	rootCmd.Flags().BoolVarP(&conf.Verbose, "verbose", "v", false, "Set debug mode")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
+	if conf.File != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+		viper.SetConfigFile(conf.File)
 	} else {
 		// Find home directory.
 		home, err := homedir.Dir()
@@ -95,4 +86,25 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+func run(cmd *cobra.Command, args []string) {
+	if len(args) < 1 {
+		exit("Source directory is missing")
+	}
+	if len(args) < 2 {
+		exit("Target directory is missing")
+	}
+
+	conf.Source = args[0]
+	conf.Target = args[1]
+
+	if err := crawler.Run(&conf); err != nil {
+		exit(err.Error())
+	}
+}
+
+func exit(msg string) {
+	fmt.Println(msg)
+	os.Exit(0)
 }
