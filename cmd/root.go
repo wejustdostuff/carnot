@@ -31,19 +31,14 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
-	"github.com/wejustdostuff/carnot/crawler"
 )
 
-var conf crawler.Config
+var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "carnot",
-	Short: "File sorting tool to organize files into folders by year, month and day.",
-	Long: `This software will move all files from the input directory into the output
-    directory without changing the files content. It will only rename the
-    files and place them in the proper directory for year, month and day.`,
-	Run: run,
+	Short: "A tool to organize files into folders by year, month and day.",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -58,18 +53,21 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.Flags().StringVarP(&conf.File, "config", "c", "", "config file (default is $HOME/.carnot.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.carnot.yaml)")
 
-	rootCmd.Flags().BoolVar(&conf.Dry, "dry", false, "Run in dry mode")
-	rootCmd.Flags().BoolVar(&conf.Move, "move", false, "Copy or move files")
-	rootCmd.Flags().BoolVarP(&conf.Verbose, "verbose", "v", false, "Set debug mode")
+	rootCmd.PersistentFlags().String("log-level", "info", "Specify log level to use when logging to stderr [error, info, debug]")
+	rootCmd.PersistentFlags().String("log-format", "text", "Specify log format to use when logging to stderr [text or json]")
+
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if conf.File != "" {
+	logrus.SetLevel(getLogLevel())
+	logrus.SetFormatter(getLogFormatter())
+
+	if cfgFile != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(conf.File)
+		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
 		home, err := homedir.Dir()
@@ -91,33 +89,31 @@ func initConfig() {
 	}
 }
 
-func run(cmd *cobra.Command, args []string) {
-
-	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableLevelTruncation: true,
-		DisableTimestamp:       true,
-	})
-
-	if conf.Verbose {
-		logrus.SetLevel(logrus.DebugLevel)
-	}
-
-	if len(args) < 1 {
-		exit("Source directory is missing")
-	}
-	if len(args) < 2 {
-		exit("Target directory is missing")
-	}
-
-	conf.Source = args[0]
-	conf.Target = args[1]
-
-	if err := crawler.Run(&conf); err != nil {
-		exit(err.Error())
-	}
-}
-
 func exit(msg string) {
 	fmt.Println(msg)
 	os.Exit(0)
+}
+
+func getLogLevel() logrus.Level {
+	level, _ := rootCmd.PersistentFlags().GetString("log-level")
+	logLevel, err := logrus.ParseLevel(level)
+
+	if err != nil {
+		logrus.Warnf("Unknown log level specified (%s), will use default level instead.", level)
+		logLevel = logrus.ErrorLevel
+	}
+
+	return logLevel
+}
+
+func getLogFormatter() logrus.Formatter {
+	format, _ := rootCmd.PersistentFlags().GetString("log-format")
+
+	if format == "json" {
+		return &logrus.JSONFormatter{}
+	} else if format != "text" {
+		logrus.Warnf("Unknown log format specified (%s), will use default text formatter instead.", format)
+	}
+
+	return &logrus.TextFormatter{FullTimestamp: true}
 }

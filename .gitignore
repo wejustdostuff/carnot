@@ -119,4 +119,5 @@ fabric.properties
 
 bin/*
 !bin/.gitkeep
+dist/
 tmp/

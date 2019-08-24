@@ -1,37 +1,19 @@
-pkgs=$(shell go list ./... | grep -v /vendor/)
+default: build
 
-all: vet format style test build
+GITHUB_REPO ?= github.com/wejustdostuff/carnot
+GORELEASER := $(shell command -v goreleaser 2> /dev/null)
 
-.PHONY: style
-style:
-	@echo ">> checking code style"
-	@gofmt -d $(shell find . -path ./vendor -prune -o -name '*.go' -print) | grep '^'
+.PHONY: build test format
 
-.PHONY: test
+build:
+ifndef GORELEASER
+	$(error "goreleaser not found (`go get -u -v github.com/goreleaser/goreleaser` to fix)")
+endif
+	$(GORELEASER) --skip-publish --rm-dist --snapshot
+
 test:
-	@echo ">> running tests"
-	@go test -short $(pkgs)
+	go test -v -cover -race $(GITHUB_REPO)/...
 
-.PHONY: format
 format:
-	@echo ">> formatting code"
-	@go fmt $(pkgs)
-
-.PHONY: vet
-vet:
-	@echo ">> vetting code"
-	@go vet $(pkgs)
-
-.PHONY: build
-build: dep
-	@echo ">> building binaries"
-	@mkdir -p bin
-	@CGO_ENABLED=0 go build -ldflags "-X main.version=`git rev-parse --short HEAD`" -o bin/carnot main.go
-
-.PHONY: dep
-dep:
-	go mod vendor
-
-.PHONY: release
-release: goreleaser
-	goreleaser --rm-dist
+	test -z "$$(find . -path ./vendor -prune -type f -o -name '*.go' -exec gofmt -d {} + | tee /dev/stderr)" || \
+	test -z "$$(find . -path ./vendor -prune -type f -o -name '*.go' -exec gofmt -w {} + | tee /dev/stderr)"
