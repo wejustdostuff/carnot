@@ -55,7 +55,7 @@ var copyCmd = &cobra.Command{
 		// Iterate files
 		for _, file := range files {
 			if !force && file.Exists(target) {
-				printWarning("warning: skipping file %s as it already exists", file.Path)
+				printWarning("%s -> %s, already exists", file.Path, file.GetPath(target))
 				continue
 			}
 
