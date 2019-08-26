@@ -19,6 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
 package cmd
 
 import (
@@ -29,11 +30,14 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/logrusorgru/aurora"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
+var colors bool
 var cfgFile string
+var au aurora.Aurora
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -55,13 +59,14 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.carnot.yaml)")
 
-	rootCmd.PersistentFlags().String("log-level", "info", "Specify log level to use when logging to stderr [error, info, debug]")
-	rootCmd.PersistentFlags().String("log-format", "text", "Specify log format to use when logging to stderr [text or json]")
-
+	rootCmd.PersistentFlags().String("log-level", "info", "specify log level to use when logging to stderr [error, info, debug]")
+	rootCmd.PersistentFlags().String("log-format", "text", "specify log format to use when logging to stderr [text or json]")
+	rootCmd.PersistentFlags().BoolVar(&colors, "colors", true, "enable or disable color output")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	au = aurora.NewAurora(colors)
 	logrus.SetLevel(getLogLevel())
 	logrus.SetFormatter(getLogFormatter())
 
@@ -89,9 +94,26 @@ func initConfig() {
 	}
 }
 
-func exit(msg string) {
-	fmt.Println(msg)
-	os.Exit(0)
+func exit(cmd *cobra.Command, format string, a ...interface{}) {
+	printError(format, a...)
+	cmd.Usage()
+	os.Exit(1)
+}
+
+func printInfo(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, format+"\n", a...)
+}
+
+func printWarning(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, au.Sprintf(au.Yellow(format), a...)+"\n")
+}
+
+func printError(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, au.Sprintf(au.Red(format), a...)+"\n")
+}
+
+func printSuccess(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, au.Sprintf(au.Green(format), a...)+"\n")
 }
 
 func getLogLevel() logrus.Level {

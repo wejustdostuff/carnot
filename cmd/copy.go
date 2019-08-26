@@ -23,50 +23,57 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
 	"github.com/wejustdostuff/carnot/pkg/crawler"
 )
 
-// crawlCmd represents the crawl command
-var crawlCmd = &cobra.Command{
-	Use:   "crawl",
-	Short: "Crawl the source directory and organize all files to the target directory.",
+// copyCmd represents the copy command
+var copyCmd = &cobra.Command{
+	Use:   "copy",
+	Short: "Copy all files from the source directory to the target directory.",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Get flags
 		source, _ := cmd.Flags().GetString("source")
 		if source == "" {
-			fmt.Fprintf(os.Stderr, "error: source cannot be empty\n")
-			cmd.Usage()
-			os.Exit(1)
+			exit(cmd, "error: source cannot be empty\n")
 		}
 
 		target, _ := cmd.Flags().GetString("target")
 		if target == "" {
-			fmt.Fprintf(os.Stderr, "error: target cannot be empty\n")
-			cmd.Usage()
-			os.Exit(1)
+			exit(cmd, "error: target cannot be empty\n")
 		}
 
-		dry, _ := cmd.Flags().GetBool("dry")
-		move, _ := cmd.Flags().GetBool("move")
 		force, _ := cmd.Flags().GetBool("force")
 
-		if err := crawler.Run(source, target, dry, move, force); err != nil {
-			exit(err.Error())
+		// Retrieve files
+		files, err := crawler.GetFiles(source)
+		if err != nil {
+			exit(cmd, "error: could not retrieve files: %s\n", err.Error())
 		}
+
+		// Iterate files
+		for _, file := range files {
+			if !force && file.Exists(target) {
+				printWarning("warning: skipping file %s as it already exists", file.Path)
+				continue
+			}
+
+			if err := file.Copy(target); err != nil {
+				printWarning("warning: could not copy file %s (%s)", file.Path, err.Error())
+			} else {
+				printInfo("%s -> %s", file.Path, file.GetPath(target))
+			}
+		}
+		printSuccess("Done")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(crawlCmd)
+	rootCmd.AddCommand(copyCmd)
 
-	crawlCmd.Flags().StringP("source", "s", "", "Specify the source directory to move the files from")
-	crawlCmd.Flags().StringP("target", "t", "", "Specify the target directory to move the files to")
+	copyCmd.Flags().StringP("source", "s", "", "Specify the source directory to move the files from")
+	copyCmd.Flags().StringP("target", "t", "", "Specify the target directory to move the files to")
 
-	crawlCmd.Flags().Bool("dry", false, "Run in dry mode")
-	crawlCmd.Flags().Bool("move", false, "Copy or move files")
-	crawlCmd.Flags().Bool("force", false, "Force files to be moved ignoring existing files")
+	copyCmd.Flags().Bool("force", false, "Force files to be moved ignoring existing files")
 }
