@@ -64,12 +64,14 @@ func GetFiles(source string) ([]*File, error) {
 			for _, fileInfo := range fileInfos {
 				for key, value := range fileInfo.Fields {
 					file.ExifMetaData[key] = value
+					//fmt.Println(fmt.Sprintf("%s: %v", key, value))
 				}
+				//spew.Dump(fileInfo)
 			}
 		}
 
 		// Set file's date
-		file.SetDate([]string{"DateTimeOriginal"})
+		file.SetDate([]string{"DateTimeOriginal", "FileModifyDate"})
 
 		files = append(files, file)
 
@@ -81,6 +83,25 @@ func GetFiles(source string) ([]*File, error) {
 	return files, nil
 }
 
+// GetMetadata ...
+func GetMetadata(files []*File) map[string]bool {
+	metadata := map[string]int{}
+
+	for _, file := range files {
+		for key := range file.ExifMetaData {
+			metadata[key] = metadata[key] + 1
+		}
+	}
+
+	values := map[string]bool{}
+	for key, value := range metadata {
+		values[key] = value == len(files)
+	}
+
+	return values
+}
+
+// isDir helper
 func isDir(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {

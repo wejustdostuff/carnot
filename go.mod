@@ -11,11 +11,9 @@ require (
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.8.0
-	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd // indirect
 	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
-	github.com/tajtiattila/metadata v0.0.0-20180130123038-1ef25f4c37ea // indirect
 	go.hein.dev/go-version v0.1.0
 	gopkg.in/djherbis/times.v1 v1.2.0
 )
