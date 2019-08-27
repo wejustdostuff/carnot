@@ -35,9 +35,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-var colors bool
-var cfgFile string
-var au aurora.Aurora
+var (
+	colors   bool
+	cfgFile  string
+	au       aurora.Aurora
+	gVersion string
+	gCommit  string
+	gDate    string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -47,7 +52,10 @@ var rootCmd = &cobra.Command{
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+func Execute(version, commit, date string) {
+	gVersion = version
+	gCommit = commit
+	gDate = date
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

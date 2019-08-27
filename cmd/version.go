@@ -31,16 +31,13 @@ import (
 
 var (
 	shortened  = false
-	version    = "dev"
-	commit     = "none"
-	date       = "unknown"
 	output     = "json"
 	versionCmd = &cobra.Command{
 		Use:   "version",
 		Short: "Version will output the current build information",
 		Long:  ``,
 		Run: func(_ *cobra.Command, _ []string) {
-			resp := goversion.FuncWithOutput(shortened, version, commit, date, output)
+			resp := goversion.FuncWithOutput(shortened, gVersion, gCommit, gDate, output)
 			fmt.Print(resp)
 			return
 		},
