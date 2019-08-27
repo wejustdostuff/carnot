@@ -28,3 +28,9 @@ changelog:
     - '^test:'
     - '^chore:'
     - '^refactor:'
+brew:
+  github:
+    owner: wejustdostuff
+    name: homebrew-carnot
+  homepage: "https://github.com/wejustdostuff/carnot"
+  description: "Small utility to copy/move files from a source directory to a target directory and organize them by date"
