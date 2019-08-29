@@ -62,10 +62,10 @@ var listCmd = &cobra.Command{
 		t.Style().Options.SeparateHeader = false
 		t.Style().Options.SeparateRows = false
 
-		t.AppendHeader(table.Row{"Source", "", "Target", "Date Field"})
+		t.AppendHeader(table.Row{"Source", "", "Target", "Date Field", "Date", "Time"})
 
 		for _, file := range files {
-			t.AppendRow(table.Row{file.Path, "->", file.GetPath(target), file.DateField})
+			t.AppendRow(table.Row{file.Path, "->", file.GetPath(target), file.DateField, file.Date.Format("2006.01.02"), file.Date.Format("15:04:05")})
 		}
 
 		fmt.Println(t.Render())
