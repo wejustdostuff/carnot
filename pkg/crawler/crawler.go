@@ -64,14 +64,12 @@ func GetFiles(source string) ([]*File, error) {
 			for _, fileInfo := range fileInfos {
 				for key, value := range fileInfo.Fields {
 					file.ExifMetaData[key] = value
-					//fmt.Println(fmt.Sprintf("%s: %v", key, value))
 				}
-				//spew.Dump(fileInfo)
 			}
 		}
 
 		// Set file's date
-		file.SetDate([]string{"DateTimeOriginal", "FileModifyDate"})
+		file.SetDate([]string{"DateTimeOriginal"})
 
 		files = append(files, file)
 
